@@ -1,8 +1,10 @@
 #!/usr/local/bin/python3
 print("Importing libraries...")
-import io, os, ntpath
+import io, os, ntpath, re, enchant
 
 from google.cloud import vision
+from spellchecker import SpellChecker
+spell = SpellChecker()
 
 from PIL import ImageFont
 from PIL import Image
@@ -69,8 +71,14 @@ for key in images.keys():
             lines = pic_to_text(images[key][o]).split("\n")
             text = ""
             for line in lines:
-                if len(line) > 3:
-                    text += line+" "
+                filter = re.sub(r"[^a-zA-Z\s:;'\".,!?~'`\-()/\\]+", "", line)
+                if len(filter) > 8:
+                    text += filter+" "
+                else:
+                    filters = re.sub(r"[^a-zA-Z\s']+", "", filter).split(" ")
+                    for word in filters:
+                        if word > 1 and spell.correction(word) == word:
+                            text += word+" "
             texts.append(text)
             original += str(o+1) + " " + text + "\n\n"
         print(original)

@@ -2,7 +2,7 @@
 import os
 from zipfile import ZipFile
 
-bigFile = '~/Desktop/Kindergarten Book slideshows 2'
+bigFile = '~/Desktop/KBS'
 unzipRoot = '~/Desktop/PicturesT'
 pptsPath = []
 pptsNames = []
@@ -18,7 +18,6 @@ for i in range(0, len(pptsPath)):
       if file.startswith("ppt/media/"):
         f.extract(file, path = unzipRoot)
     os.rename(unzipRoot + "/ppt/media", unzipRoot + "/" + pptsNames[i])
-os.remove(unzipRoot + "/ppt")
 
 print(pptsNames)
 print(len(pptsNames))
