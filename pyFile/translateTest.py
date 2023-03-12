@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3
 print("Importing libraries...")
-import io, os, ntpath, re, enchant
+import io, os, ntpath, re, wordfreq
 
 from google.cloud import vision
 from spellchecker import SpellChecker
@@ -77,10 +77,14 @@ for key in images.keys():
                 else:
                     filters = re.sub(r"[^a-zA-Z\s']+", "", filter).split(" ")
                     for word in filters:
-                        if word > 1 and spell.correction(word) == word:
-                            text += word+" "
-            texts.append(text)
-            original += str(o+1) + " " + text + "\n\n"
+                        if  spell.correction(word) == word and wordfreq.zipf_frequency(word, 'en') > 3.5:
+                            if len(word) <= 3 and word.upper() == False:
+                                text += word+" "
+                            elif len(word) > 3:
+                                text += word+" "
+            if len(text) > 6:
+                texts.append(text)
+                original += str(o+1) + " " + text + "\n\n"
         print(original)
         with open(txtO + ".txt", "a") as O:
             O.write(original)
