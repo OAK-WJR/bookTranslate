@@ -1,6 +1,9 @@
 #!/usr/local/bin/python3
 import os, xlwt, re
 
+style_wrap = xlwt.XFStyle()
+style_wrap.alignment.wrap = 1
+
 dataFileRoot = '~/Desktop/Translate by WJR'
 
 items = os.listdir(dataFileRoot)
@@ -50,7 +53,7 @@ for sheet_key in aBD.keys():
   worksheet = workbook.add_sheet(re.sub(r'[^\w\s\']', '', sheet_key).replace(" ","")[:31])
   for row_index, row_data in enumerate(aBD[sheet_key]):
       for col_index, col_data in enumerate(row_data):
-          worksheet.write(row_index, col_index, col_data)
-    
+          worksheet.write(row_index, col_index, col_data, style=style_wrap)
+
 workbook.save('~/Desktop/TranslateXLS.xls')
 print(aBD)
