@@ -2,8 +2,8 @@
 import os
 from zipfile import ZipFile
 
-bigFile = '~/Desktop/KBS'
-unzipRoot = '~/Desktop/PicturesT'
+bigFile = '~/Desktop/Kindergarten Book slideshows'
+unzipRoot = '~/Desktop/PicturesT25'
 pptsPath = []
 pptsNames = []
 for root, dirs, files in os.walk(bigFile):

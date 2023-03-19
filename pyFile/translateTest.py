@@ -27,7 +27,7 @@ def pic_to_text(infile):
 
     return text
 
-bigFile = "~/Desktop/PictureBooksT"
+bigFile = "~/Desktop/PicturesT25"
 images = {}
 
 print("Checking which files to translate...")
@@ -83,7 +83,7 @@ for key in images.keys():
                 texts.append(text)
                 original += str(o+1) + " " + text + "\n\n"
             else:
-                texts.append("")
+                texts.append(" ")
                 original += str(o+1) + "\n\n"
         print(original)
         with open(txtO + ".txt", "a") as O:
