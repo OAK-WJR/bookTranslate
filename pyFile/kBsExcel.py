@@ -4,7 +4,7 @@ import os, xlwt, re
 style_wrap = xlwt.XFStyle()
 style_wrap.alignment.wrap = 1
 
-dataFileRoot = '~/Desktop/PictureBooksT'
+dataFileRoot = '~/Desktop/PicturesT'
 
 items = os.listdir(dataFileRoot)
 

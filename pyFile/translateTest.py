@@ -27,7 +27,7 @@ def pic_to_text(infile):
 
     return text
 
-bigFile = "~/Desktop/PicturesT25"
+bigFile = "~/Desktop/PicturesT"
 images = {}
 
 print("Checking which files to translate...")
