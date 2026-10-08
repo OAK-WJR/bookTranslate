@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Denslow's Three Bears · bookTranslate demo</title>
+  <meta name="description" content="A demo of bookTranslate: the words on each page of Denslow's Three Bears (1903) read by Google Cloud Vision and translated into 8 languages by Google Translate.">
+  <style>
+    :root { --ink: #1f2328; --muted: #59636e; --line: #d1d9e0; --paper: #fff; --bg: #f6f8fa; --link: #0b57d0; }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--bg); color: var(--ink);
+           font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", sans-serif; }
+    main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 40px; }
+    a { color: var(--link); }
+    h1 { font-size: 1.6rem; margin: 0 0 6px; }
+    .lead { color: var(--muted); margin: 0 0 18px; max-width: 760px; }
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 18px; }
+    .languages { display: flex; flex-wrap: wrap; gap: 6px; }
+    .export { padding: 5px 14px; border-radius: 999px; background: var(--link); color: #fff; text-decoration: none; white-space: nowrap; }
+    .export:hover { background: #0842a0; }
+    .export:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+    button { font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 999px;
+             padding: 5px 14px; cursor: pointer; }
+    button:hover:not([aria-disabled="true"]) { border-color: var(--muted); }
+    button[aria-disabled="true"] { color: #9aa4ae; cursor: default; }
+    .languages button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .reader { display: grid; gap: 16px; }
+    @media (min-width: 900px) { .reader { grid-template-columns: 1fr 1fr; align-items: start; } }
+    @media (max-width: 899px) { .words { order: -1; } }
+    figure { margin: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 12px; text-align: center; }
+    figure img { max-width: 100%; max-height: 72vh; height: auto; vertical-align: middle; }
+    .pager { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between;
+             margin-bottom: 12px; padding: 10px 0; background: var(--bg); }
+    .count { color: var(--muted); }
+    .words { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; }
+    #text { margin: 0; white-space: pre-wrap; font-size: 1.05rem; }
+    #text.note { color: var(--muted); font-style: italic; }
+    #badge { display: inline-block; margin-top: 12px; }
+    #badge img { display: block; }
+    footer { margin-top: 28px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; }
+    .disclaimer { font-size: .75rem; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Denslow's Three Bears</h1>
+  <p class="lead">A demo of <a href="https://github.com/OAK-WJR/bookTranslate">bookTranslate</a>: Google Cloud Vision read the English words
+    on each page of a slideshow, and Google Translate, through the <a href="https://cloud.google.com/translate">Cloud Translation API</a>, translated them into 8 languages.
+    The results were saved, so nothing is translated while you read (<a href="demo.mp4">1-minute video</a>).
+    To translate your own books, run bookTranslate with your own Google Cloud project: sign in with gcloud or use your own key
+    (<a href="https://github.com/OAK-WJR/bookTranslate#running-it">how</a>).</p>
+
+  <div class="toolbar">
+    <div class="languages" id="languages" role="group" aria-label="Language"></div>
+    <a class="export" href="denslows-three-bears-translations.xls" download>Export all pages (Excel)</a>
+  </div>
+
+  <div class="pager">
+    <button id="prev" type="button">‹ Previous</button>
+    <span class="count" id="count" aria-live="polite"></span>
+    <button id="next" type="button">Next ›</button>
+  </div>
+
+  <div class="reader">
+    <figure><img id="picture" alt=""></figure>
+    <div class="words">
+      <p id="text" translate="no" aria-live="polite"></p>
+      <a id="badge" href="http://translate.google.com" target="_blank" rel="noopener" hidden>
+        <img src="powered-by-google-translate.png" alt="powered by Google Translate" width="176" height="16">
+      </a>
+    </div>
+  </div>
+
+  <footer>
+    <p>The Excel file is what the scripts made from <a href="denslows-three-bears.pptx">this slideshow (.pptx)</a>.
+      Third-party parts and their terms are listed in <a href="https://github.com/OAK-WJR/bookTranslate/blob/main/THIRD_PARTY_NOTICES.md">THIRD_PARTY_NOTICES.md</a>.</p>
+    <p>Denslow's Three Bears by W. W. Denslow, 1903, is in the public domain. Source: <a href="https://www.gutenberg.org/ebooks/19772">Project Gutenberg</a>.
+      Picture pages are the book's own pictures, some with the story lettered on them; the other pages were set in type from the book's text.</p>
+    <p class="disclaimer">THIS SERVICE MAY CONTAIN TRANSLATIONS POWERED BY GOOGLE. GOOGLE DISCLAIMS ALL WARRANTIES RELATED TO THE TRANSLATIONS,
+      EXPRESS OR IMPLIED, INCLUDING ANY WARRANTIES OF ACCURACY, RELIABILITY, AND ANY IMPLIED WARRANTIES OF MERCHANTABILITY,
+      FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.</p>
+  </footer>
+</main>
+
+<script>
+  const $ = id => document.getElementById(id);
+  let book, page = 1, language = "en";   // start on page 2: bookTranslate skips the cover, so page 1 has no text
+
+  function show() {
+    const current = book.pages[page];
+    $("picture").src = current.image;
+    $("picture").alt = `Page ${page + 1} of ${book.title}`;
+    $("count").textContent = `Page ${page + 1} of ${book.pages.length}`;
+    $("prev").setAttribute("aria-disabled", page === 0);
+    $("next").setAttribute("aria-disabled", page === book.pages.length - 1);
+    for (const button of $("languages").children) {
+      button.setAttribute("aria-pressed", button.dataset.code === language);
+    }
+    const words = current.text[language];
+    const text = $("text");
+    if (words) {
+      text.textContent = words;
+      // Google's markup for machine-translated text: lang="<target>-x-mtfrom-<source>"
+      text.lang = language === "en" ? "en" : `${language}-x-mtfrom-en`;
+      text.className = "";
+    } else {
+      text.textContent = page === 0 ? "The cover. bookTranslate skips the first picture of each slideshow." : "This page has no words.";
+      text.lang = "en";
+      text.className = "note";
+    }
+    $("badge").hidden = !(words && language !== "en");
+    if (book.pages[page + 1]) new Image().src = book.pages[page + 1].image;   // load the next page early
+  }
+
+  function turn(step) {
+    const target = page + step;
+    if (target >= 0 && target < book.pages.length) { page = target; show(); }
+  }
+
+  fetch("book.json").then(response => response.json()).then(data => {
+    book = data;
+    for (const [code, name] of book.languages) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = name;
+      button.lang = code;
+      button.dataset.code = code;
+      button.addEventListener("click", () => { language = code; show(); });
+      $("languages").append(button);
+    }
+    show();
+  });
+  $("prev").addEventListener("click", () => turn(-1));
+  $("next").addEventListener("click", () => turn(1));
+  document.addEventListener("keydown", event => {
+    if (event.key === "ArrowLeft") turn(-1);
+    if (event.key === "ArrowRight") turn(1);
+  });
+</script>
+</body>
+</html>

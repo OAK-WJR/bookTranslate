@@ -1,53 +1,33 @@
-#!/usr/local/bin/python3
-import os
+#!/usr/bin/env python3
+"""Copy the pictures out of every .pptx slideshow in a folder, one folder per book."""
+import argparse, os
 from zipfile import ZipFile
 
-bigFile = '~/Desktop/AllBooks'
-unzipRoot = '~/Desktop/PicturesT'
-pptsPath = []
-pptsNames = []
-for root, dirs, files in os.walk(bigFile):
-    for file in files:
-        if file.startswith(".") == False and file.endswith(".pptx"):
-          pptsPath.append(os.path.join(root, file))
-          pptsNames.append(file.replace(".pptx", ""))
-          
-for i in range(0, len(pptsPath)):
-  with ZipFile(pptsPath[i]) as f:
-    for file in f.namelist():
-      if file.startswith("ppt/media/"):
-        f.extract(file, path = unzipRoot)
-    if os.path.exists(unzipRoot + "/" + pptsNames[i]):
-      os.rename(unzipRoot + "/ppt/media", unzipRoot + "/" + pptsNames[i] + "2")
-    else:
-      os.rename(unzipRoot + "/ppt/media", unzipRoot + "/" + pptsNames[i])
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("slides", help="folder with the .pptx slideshows (subfolders are searched too)")
+parser.add_argument("pictures", help="folder to create one picture folder per book in")
+args = parser.parse_args()
 
-print(pptsNames)
-print(len(pptsNames))
+usedNames = set()
+for root, dirs, files in os.walk(args.slides):
+  for file in sorted(files):
+    if file.startswith(".") or not file.endswith(".pptx"):
+      continue
 
+    # Two slideshows with the same name go to "Name" and "Name2"
+    name = file[:-len(".pptx")]
+    bookName, n = name, 2
+    while bookName in usedNames:
+      bookName, n = f"{name}{n}", n + 1
+    usedNames.add(bookName)
 
-        
+    bookDir = os.path.join(args.pictures, bookName)
+    os.makedirs(bookDir, exist_ok=True)
+    with ZipFile(os.path.join(root, file)) as pptx:
+      for member in pptx.namelist():
+        if member.startswith("ppt/media/") and not member.endswith("/"):
+          with open(os.path.join(bookDir, os.path.basename(member)), "wb") as picture:
+            picture.write(pptx.read(member))
+    print(bookDir)
 
-
-'''
-txt = ""
-txt = txt.split("\n")
-for i in txt:
-  if len(i) > 5:
-    print(i)
-text = filter(str.isalpha, txt)
-print("".join(list(text)))
-'''
-
-'''
-import ntpath
-images = ['~/Desktop/PictureBooksT/2/picture3.png', '~/Desktop/PictureBooksT/2/picture2.png', '~/Desktop/PictureBooksT/2/picture1.png', '~/Desktop/PictureBooksT/2/picture5.png', '~/Desktop/PictureBooksT/2/picture4.png', '~/Desktop/PictureBooksT/2/picture6.png', '~/Desktop/PictureBooksT/2/picture7.png', '~/Desktop/PictureBooksT/2/picture19.png', '~/Desktop/PictureBooksT/2/picture18.png', '~/Desktop/PictureBooksT/2/picture16.png', '~/Desktop/PictureBooksT/2/picture17.png', '~/Desktop/PictureBooksT/2/picture15.png', '~/Desktop/PictureBooksT/2/picture14.png', '~/Desktop/PictureBooksT/2/picture10.png', '~/Desktop/PictureBooksT/2/picture11.png', '~/Desktop/PictureBooksT/2/picture13.png', '~/Desktop/PictureBooksT/2/picture12.png', '~/Desktop/PictureBooksT/2/picture9.png', '~/Desktop/PictureBooksT/2/picture8.png']
-imagesSort = {}
-for image in images:
-  imagesSort[int("".join(list(filter(str.isdigit, ntpath.basename(image)))))] = image
-imagesSort = sorted(imagesSort.items(), key = lambda k: k[0])
-images = []
-for i in range(0, len(imagesSort)):
-  images.append(imagesSort[i][1])
-print(images[2:])
-'''
+print(len(usedNames), "books")
