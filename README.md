@@ -39,7 +39,7 @@ Both APIs are paid services with free monthly amounts. Cloud Translation counts 
 
 ## History
 
-The 2023 commits are the original work, and the next commit holds the April 2023 changes that were never committed at the time. In this public copy, private details and some code are left out, and Chinese text has been translated into English; commit dates and author names are unchanged. In October 2026 I cleaned the project up for publication: arguments instead of hard-coded paths, bug fixes, this README, the license and the demo. The free translation service the 2023 scripts used no longer works reliably, so the scripts now translate with Google's Cloud Translation API. Later I plan to add my own translation model.
+The 2023 commits are the original work, and the next commit holds the April 2023 changes that were never committed at the time. In this public copy, private details and some code are left out, and Chinese text has been translated into English; commit dates and author names are unchanged. In October 2026 I cleaned the project up for publication: arguments instead of hard-coded paths, bug fixes, this README, the license and the demo. The free translation service the 2023 scripts used no longer works reliably, so the scripts now translate with Google's Cloud Translation API. Later I plan to add another translation method.
 
 ## License
 
