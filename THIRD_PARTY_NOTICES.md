@@ -2,7 +2,7 @@
 
 This file lists the third-party material in this repository. Each item stays under its own terms; the license texts that must go with them are at the end of this file. Everything else is covered by [LICENSE](LICENSE).
 
-The scripts use Python packages that `pip` installs from `requirements.txt`; the `demo/` scripts also need Pillow and python-pptx. None of their code is included here.
+The scripts use Python packages that `pip` installs from `requirements.txt`; the `demo/` scripts also need Pillow and python-pptx; the demo page's live translation uses the translation packs that Chrome downloads. None of their code or data is included here.
 
 ---
 
@@ -36,9 +36,17 @@ The scripts use Python packages that `pip` installs from `requirements.txt`; the
 
 ## 5. Machine translations
 
-**Files:** the translations in `docs/book.json`, `docs/denslows-three-bears-translations.xls` and `docs/demo.mp4`.
+**Files:** the translations in `docs/book.json` and `docs/denslows-three-bears-translations.xls`, and the ones shown with the badge in `docs/demo.mp4` (the live French translation in the video was made by Chrome's built-in Translator API).
 
 They were made with Google's Cloud Translation API. Google's attribution guidelines (<https://cloud.google.com/translate/attribution>) require the "powered by Google Translate" badge next to them and this disclaimer on the site or app that shows them: THIS SERVICE MAY CONTAIN TRANSLATIONS POWERED BY GOOGLE. GOOGLE DISCLAIMS ALL WARRANTIES RELATED TO THE TRANSLATIONS, EXPRESS OR IMPLIED, INCLUDING ANY WARRANTIES OF ACCURACY, RELIABILITY, AND ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+## 6. Chrome Translator API code sample
+
+**File:** `docs/index.html`: the `Translator.create()` call with a download monitor is adapted, with changes, from the code samples in Chrome's Translator API documentation (<https://developer.chrome.com/docs/ai/translator-api>).
+
+**Copyright:** Copyright Google LLC
+
+**License:** Apache License, Version 2.0, the license Chrome's documentation gives for its code samples (full text in [Apache License 2.0](#apache-license-20) below).
 
 ---
 

@@ -4,7 +4,7 @@ Turns kindergarten picture-book slideshows into page-by-page translations, so th
 
 I wrote these scripts in February–April 2023 and cleaned them up for publication in October 2026 (see [History](#history)).
 
-**[See it work](https://oak-wjr.github.io/bookTranslate/)** on *Denslow's Three Bears* (1903), a public-domain picture book: every page as the scripts read it, in English and 8 translations ([1-minute video](https://oak-wjr.github.io/bookTranslate/demo.mp4)). The pages were made into a slideshow and run through the three scripts below; `demo/` has the two small scripts that built the demo.
+**[See it work](https://oak-wjr.github.io/bookTranslate/)** on *Denslow's Three Bears* (1903), a public-domain picture book: every page as the scripts read it, in English and 8 translations ([1-minute video](https://oak-wjr.github.io/bookTranslate/demo.mp4)). In desktop Chrome 138 or later, the demo can also translate a page live, on your computer, with Chrome's built-in [Translator API](https://developer.chrome.com/docs/ai/translator-api); Chrome downloads a translation pack for each language the first time. The pages were made into a slideshow and run through the three scripts below; `demo/` has the two small scripts that built the demo.
 
 ## How it works
 

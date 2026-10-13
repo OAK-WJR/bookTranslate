@@ -38,6 +38,9 @@
     #text.note { color: var(--muted); font-style: italic; }
     #badge { display: inline-block; margin-top: 12px; }
     #badge img { display: block; }
+    #live { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+    #liveStatus { margin: 8px 0 0; color: var(--muted); font-size: .9rem; }
+    #liveText { margin: 6px 0 0; white-space: pre-wrap; font-size: 1.05rem; }
     footer { margin-top: 28px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; }
     .disclaimer { font-size: .75rem; }
   </style>
@@ -46,9 +49,11 @@
 <main>
   <h1>Denslow's Three Bears</h1>
   <p class="lead">A demo of <a href="https://github.com/OAK-WJR/bookTranslate">bookTranslate</a>: Google Cloud Vision read the English words
-    on each page of a slideshow, and Google Translate, through the <a href="https://cloud.google.com/translate">Cloud Translation API</a>, translated them into 8 languages.
-    The results were saved, so nothing is translated while you read (<a href="demo.mp4">1-minute video</a>).
-    To translate your own books, run bookTranslate with your own Google Cloud project: sign in with gcloud or use your own key
+    on each page of a slideshow, and Google Translate, through the <a href="https://cloud.google.com/translate">Cloud Translation API</a>, translated them into 8 languages;
+    the results were saved (<a href="demo.mp4">1-minute video</a>). In desktop Chrome 138 or later you can also translate a page live, on your computer,
+    with Chrome's built-in <a href="https://developer.chrome.com/docs/ai/translator-api">Translator API</a>;
+    the first time for each language, Chrome downloads a translation pack of up to about 85 MB.
+    To translate your own books, run bookTranslate with your own Google Cloud project or key
     (<a href="https://github.com/OAK-WJR/bookTranslate#running-it">how</a>).</p>
 
   <div class="toolbar">
@@ -69,6 +74,11 @@
       <a id="badge" href="http://translate.google.com" target="_blank" rel="noopener" hidden>
         <img src="powered-by-google-translate.png" alt="powered by Google Translate" width="176" height="16">
       </a>
+      <div id="live" hidden>
+        <button id="liveButton" type="button">Translate this page live in Chrome</button>
+        <p id="liveStatus"><span id="liveMessage" aria-live="polite"></span><span id="liveProgress"></span></p>
+        <p id="liveText" translate="no" hidden></p>
+      </div>
     </div>
   </div>
 
@@ -110,6 +120,9 @@
       text.className = "note";
     }
     $("badge").hidden = !(words && language !== "en");
+    $("live").hidden = !(chromeTranslator && words && language !== "en");
+    say("");
+    $("liveText").hidden = true;
     if (book.pages[page + 1]) new Image().src = book.pages[page + 1].image;   // load the next page early
   }
 
@@ -117,6 +130,92 @@
     const target = page + step;
     if (target >= 0 && target < book.pages.length) { page = target; show(); }
   }
+
+  // Live translation with Chrome's built-in Translator API, on this computer. It is never shown next to Google's badge.
+  const NAMES = {"zh-CN": "Simplified Chinese", "zh-TW": "Traditional Chinese", ru: "Russian", ko: "Korean",
+                 ja: "Japanese", es: "Spanish", de: "German", fr: "French"};
+  const chromeCode = code => code === "zh-TW" ? "zh-Hant" : code;   // Chrome reads zh-TW as Simplified Chinese
+  // desktop Chrome 138 or later; Edge 148+ has this API with Microsoft's models, and Opera is untested
+  const chromeTranslator = "Translator" in self && !(navigator.userAgentData && navigator.userAgentData.brands.some(b => /Edge|Opera/.test(b.brand)));
+  const translators = {};
+  let wait = null;   // while a live translation waits for Chrome: {code, at, start, last, download, percent}
+
+  // createTranslator() is adapted, with changes, from the code samples in Chrome's Translator API documentation
+  // (Copyright Google LLC, Apache License 2.0; see THIRD_PARTY_NOTICES.md).
+  function createTranslator(code) {
+    return Translator.create({sourceLanguage: "en", targetLanguage: chromeCode(code), monitor(m) {
+      m.addEventListener("downloadprogress", e => {   // Chrome also reports 0 and 1 when nothing is downloaded
+        if (!wait || !(e.loaded > 0 && (e.loaded < 1 || wait.download))) return;
+        Object.assign(wait, {download: true, percent: Math.floor(e.loaded * 100), last: Date.now()});
+        showWait();
+      });
+    }});
+  }
+
+  async function translateText(text, code) {
+    if (!translators[code]) translators[code] = createTranslator(code);   // before any await: a first download needs the click
+    // every page is one line; Chrome puts a space after each sentence, even in Chinese and Japanese
+    const run = async () => (await (await translators[code]).translate(text)).replace(/([。！？；][”’]?|[」』]) +/g, "$1");
+    try {
+      return await run();
+    } catch (error) {   // Chrome's first translator after a start can fail, and adding or removing any language pack breaks
+                // existing ones; one new try needs no click while the language pack is installed
+      translators[code] = createTranslator(code);
+      return await run();
+    }
+  }
+
+  function say(message, progress = "") {   // screen readers read out a new message, but not the progress counting up after it
+    if ($("liveMessage").textContent !== message) $("liveMessage").textContent = message;
+    $("liveProgress").textContent = progress;
+  }
+
+  function showWait() {   // what Chrome is doing while a first-time translation pack download may be running, on any page
+    if (!wait || !wait.download) return;
+    // Chrome also says 'downloadable' for an installed pack this site has not used yet; that one is ready in about a second
+    if (wait.percent === null && Date.now() - wait.start < 1500) return;
+    if (wait.percent === 100) return say(wait.code === language && wait.at === page ? "Translating..." : "");
+    say(`Chrome is downloading its English–${NAMES[wait.code]} translation pack (first time only, up to about 85 MB): `,
+        wait.percent === null ? `${Math.round((Date.now() - wait.start) / 1000)} s so far` : `${wait.percent}%`);
+  }
+
+  async function translateLive() {
+    const code = language, at = page, button = $("liveButton");
+    if (button.getAttribute("aria-disabled") === "true") return;
+    button.setAttribute("aria-disabled", true);   // not disabled, which would take the keyboard focus away
+    wait = {code, at, start: Date.now(), last: Date.now(), download: false, percent: null};
+    const request = translateText(book.pages[at].text.en, code);   // starts Chrome's translator while the click still counts
+    say("Translating...");
+    Translator.availability({sourceLanguage: "en", targetLanguage: chromeCode(code)}).then(state => {
+      if (wait && state !== "available") { wait.download = true; showWait(); }   // the pack may have to be downloaded
+    }, () => {});
+    const ticker = setInterval(() => {
+      if (!wait) return;
+      if (Date.now() - wait.last < 60000) return showWait();
+      say("Still waiting for Chrome. Check the internet connection, or reload the page.");
+    }, 1000);
+    let message, result = null;
+    try {
+      result = await request;
+      message = "Machine translation by Chrome, on this computer:";
+    } catch (error) {
+      console.error(error);
+      delete translators[code];   // the next click starts again
+      const state = await Translator.availability({sourceLanguage: "en", targetLanguage: chromeCode(code)}).catch(() => "unavailable");
+      message = state === "unavailable" ? `Chrome can't translate English into ${NAMES[code]} on this computer.`
+                                        : "Chrome needs one more click to finish setting up its translator. Click the button again.";
+    } finally {
+      clearInterval(ticker);
+      wait = null;
+      button.setAttribute("aria-disabled", false);
+    }
+    if (code !== language || at !== page) return say("");   // the reader has moved on
+    say(message);
+    $("liveText").lang = code;
+    $("liveText").textContent = result || "";
+    $("liveText").hidden = result === null;
+  }
+  $("liveButton").addEventListener("click", translateLive);
 
   fetch("book.json").then(response => response.json()).then(data => {
     book = data;
